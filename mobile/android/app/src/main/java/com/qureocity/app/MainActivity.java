@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
+import android.webkit.WebView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.graphics.ColorUtils;
@@ -21,6 +22,11 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.WebViewListener;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Hosts the QureoCity web app.
@@ -63,6 +69,23 @@ public class MainActivity extends BridgeActivity {
             return WindowInsetsCompat.CONSUMED;
         });
 
+        // Add the white background + bar-colour sync to every page, so the
+        // app looks right even before the website itself is redeployed.
+        final String pageScript = readRawText(R.raw.page_inject);
+        if (bridge != null && pageScript != null) {
+            bridge.addWebViewListener(new WebViewListener() {
+                @Override
+                public void onPageCommitVisible(WebView view, String url) {
+                    injectInto(view, pageScript);
+                }
+
+                @Override
+                public void onPageLoaded(WebView view) {
+                    injectInto(view, pageScript);
+                }
+            });
+        }
+
         // Capacitor's own SystemBars plugin sets the icon style from the
         // phone's dark-mode setting on start-up; run after it.
         content.post(this::applyBarColors);
@@ -89,6 +112,28 @@ public class MainActivity extends BridgeActivity {
         // Dark icons on light bars, light icons on dark bars.
         controller.setAppearanceLightStatusBars(isLight(statusBarColor));
         controller.setAppearanceLightNavigationBars(isLight(navigationBarColor));
+    }
+
+    private static void injectInto(WebView view, String script) {
+        String url = view.getUrl();
+        if (url != null && url.startsWith("https://")) {
+            view.evaluateJavascript(script, null);
+        }
+    }
+
+    @Nullable
+    private String readRawText(int resId) {
+        try (InputStream in = getResources().openRawResource(resId)) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buf = new byte[4096];
+            int n;
+            while ((n = in.read(buf)) != -1) {
+                out.write(buf, 0, n);
+            }
+            return out.toString(StandardCharsets.UTF_8.name());
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     private static boolean isLight(int color) {
