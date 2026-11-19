@@ -320,7 +320,7 @@ export default function RegistrationFlow() {
 
   if (receipt) {
     return (
-      <div className="min-h-screen bg-brand-cloud flex flex-col items-center justify-center px-4 py-8">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 py-8">
         <div className="w-full max-w-md bg-white rounded-xl2 shadow-sm p-8 text-center animate-popIn">
           <img
             src="/logo-full.png"
@@ -358,7 +358,7 @@ export default function RegistrationFlow() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-cloud px-4 py-8">
+    <div className="min-h-screen bg-white px-4 py-8">
       <div className="w-full max-w-lg mx-auto">
         <img
           src="/logo-full.png"

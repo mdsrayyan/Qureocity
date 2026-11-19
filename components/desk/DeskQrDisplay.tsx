@@ -127,7 +127,7 @@ export default function DeskQrDisplay({
 
   return (
     <div
-      className={`${compact ? "min-h-[420px] lg:min-h-screen" : "min-h-screen"} bg-brand-cloud flex flex-col items-center justify-center px-4 relative overflow-hidden`}
+      className={`${compact ? "min-h-[420px] lg:min-h-screen" : "min-h-screen"} bg-white flex flex-col items-center justify-center px-4 relative overflow-hidden`}
     >
       <div className="pointer-events-none absolute -top-20 -left-20 w-72 h-72 rounded-full bg-brand-sun/20 blur-2xl" />
       <div className="pointer-events-none absolute bottom-0 -right-20 w-80 h-80 rounded-full bg-brand-sky/10 blur-2xl" />

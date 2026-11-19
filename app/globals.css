@@ -83,7 +83,7 @@ html {
   --palette-sky: 122 85 140;
   --palette-coral: 182 83 76;
   --palette-leaf: 91 125 80;
-  --night-bg: 255 245 216; /* #FFF5D8 */
+  --night-bg: 255 255 255; /* #FFFFFF — plain white page background */
   --night-surface: 255 253 223; /* #FFFDEF */
   --night-surface-2: 255 245 216; /* #FFF5D8 */
   --night-text: 21 19 15; /* #15130F */

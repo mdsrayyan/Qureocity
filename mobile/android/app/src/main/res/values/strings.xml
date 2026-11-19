@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">QureoCity</string>
+    <string name="title_activity_main">QureoCity</string>
+    <string name="package_name">com.qureocity.app</string>
+    <string name="custom_url_scheme">com.qureocity.app</string>
+</resources>

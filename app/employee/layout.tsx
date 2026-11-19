@@ -1,4 +1,7 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
+
+// The browser bar colour (theme-color) is set live by SystemBarsSync in the
+// root layout, so it always matches the page and the light/dark theme.
 
 // Staff-only shell metadata: makes the admin and employee panels
 // installable to a phone's home screen (required for push notifications
@@ -14,10 +17,6 @@ export const metadata: Metadata = {
     apple: "/icons/apple-touch-icon.png",
   },
   appleWebApp: { capable: true, title: "QureoCity" },
-};
-
-export const viewport: Viewport = {
-  themeColor: "#5B3A73",
 };
 
 export default function EmployeeLayout({

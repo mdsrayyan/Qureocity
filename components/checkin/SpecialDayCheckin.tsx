@@ -287,7 +287,7 @@ export default function SpecialDayCheckin({ code }: { code: string }) {
 
   if (step === "loading") {
     return (
-      <div className="min-h-screen bg-brand-cloud flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <p className="text-brand-ink/40 text-sm">Loading…</p>
       </div>
     );
@@ -295,7 +295,7 @@ export default function SpecialDayCheckin({ code }: { code: string }) {
 
   if (step === "notFound") {
     return (
-      <div className="min-h-screen bg-brand-cloud flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
         <img src="/logo-full.png" alt="QureoCity" className="h-14 mb-6" />
         <div className="bg-white rounded-xl2 shadow-sm p-6 max-w-md text-center">
           <h1 className="text-xl font-bold text-brand-ink mb-1">
@@ -317,7 +317,7 @@ export default function SpecialDayCheckin({ code }: { code: string }) {
 
   if (step === "ended" && plan) {
     return (
-      <div className="min-h-screen bg-brand-cloud flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
         <img src="/logo-full.png" alt="QureoCity" className="h-14 mb-6" />
         <div className="bg-white rounded-xl2 shadow-sm p-6 max-w-md text-center">
           <h1 className="text-xl font-bold text-brand-ink mb-1">
@@ -341,7 +341,7 @@ export default function SpecialDayCheckin({ code }: { code: string }) {
   if (!plan) return null;
 
   return (
-    <div className="min-h-screen bg-brand-cloud flex flex-col items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         <img
           src="/logo-full.png"

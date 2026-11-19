@@ -1,0 +1,105 @@
+name: Android APK
+
+# Builds the QureoCity Android app (mobile/) and attaches the APK to the run.
+#
+# Download it from: Actions tab -> this workflow -> latest run -> Artifacts.
+#
+# Signing (recommended, so each new APK installs over the previous one):
+# add these repository secrets (Settings -> Secrets and variables -> Actions):
+#   ANDROID_KEYSTORE_BASE64   base64 of your .jks keystore file
+#   ANDROID_KEYSTORE_PASSWORD keystore password
+#   ANDROID_KEY_ALIAS         key alias inside the keystore
+#   ANDROID_KEY_PASSWORD      key password
+# Without them a debug-signed APK is built instead (fine for testing, but a
+# newer debug APK may need the old app uninstalled first).
+#
+# Optional repository variable APP_URL overrides the site the app opens
+# (default in mobile/capacitor.config.json).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, android-app]
+    paths:
+      - "mobile/**"
+      - ".github/workflows/android.yml"
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: mobile
+    env:
+      APP_VERSION_CODE: ${{ github.run_number }}
+      APP_VERSION_NAME: 1.0.${{ github.run_number }}
+      HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Install Capacitor
+        run: npm ci
+
+      - name: Point the app at a different site (optional)
+        if: ${{ vars.APP_URL != '' }}
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          jq --arg url "$APP_URL" '.server.url = $url' capacitor.config.json > tmp.json
+          mv tmp.json capacitor.config.json
+
+      - name: Sync Android project
+        run: npx cap sync android
+
+      - name: Decode signing keystore
+        if: env.HAS_KEYSTORE == 'true'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+
+      - name: Build signed release APK
+        if: env.HAS_KEYSTORE == 'true'
+        working-directory: mobile/android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+          mkdir -p ../dist
+          cp app/build/outputs/apk/release/app-release.apk "../dist/QureoCity-${APP_VERSION_NAME}.apk"
+
+      - name: Build debug APK
+        if: env.HAS_KEYSTORE != 'true'
+        working-directory: mobile/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+          mkdir -p ../dist
+          cp app/build/outputs/apk/debug/app-debug.apk "../dist/QureoCity-${APP_VERSION_NAME}-debug.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: QureoCity-android-${{ env.APP_VERSION_NAME }}
+          path: mobile/dist/*.apk
+          if-no-files-found: error

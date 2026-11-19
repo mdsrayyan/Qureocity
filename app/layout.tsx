@@ -1,4 +1,5 @@
 import "./globals.css";
+import { SystemBarsSync } from "@/components/shared/SystemBarsSync";
 
 export const metadata = {
   title: "QureoCity",
@@ -15,6 +16,16 @@ const THEME_INIT_SCRIPT = `
     var saved = localStorage.getItem("qureocity-theme");
     var theme = saved === "light" || saved === "dark" ? saved : "light";
     document.documentElement.setAttribute("data-theme", theme);
+    // First guess for the phone's top-bar colour, so it doesn't flash before
+    // SystemBarsSync reads the real colour (staff pages follow the theme,
+    // customer pages are always light).
+    var path = location.pathname;
+    var staff = path.indexOf("/admin") === 0 || path.indexOf("/employee") === 0;
+    var meta = document.createElement("meta");
+    meta.id = "qureocity-theme-color";
+    meta.name = "theme-color";
+    meta.content = staff && theme === "dark" ? "#15130F" : "#FFFFFF";
+    document.head.appendChild(meta);
   } catch (e) {}
 })();
 `;
@@ -29,7 +40,10 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        {children}
+        <SystemBarsSync />
+      </body>
     </html>
   );
 }

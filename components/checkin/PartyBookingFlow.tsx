@@ -129,7 +129,7 @@ export default function PartyBookingFlow() {
   };
 
   if (bookingRef) return (
-    <main className="min-h-screen bg-brand-cloud px-4 py-10">
+    <main className="min-h-screen bg-white px-4 py-10">
       <section className="mx-auto max-w-lg rounded-3xl border border-brand-leaf/25 bg-white p-6 text-center shadow-sm sm:p-8">
         <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-brand-leaf/15 text-brand-leaf"><PartyPopper size={25} /></span>
         <h1 className="text-2xl font-extrabold text-brand-ink">Request received</h1>
@@ -141,7 +141,7 @@ export default function PartyBookingFlow() {
   );
 
   return (
-    <main className="min-h-screen bg-brand-cloud px-4 py-7 sm:py-10">
+    <main className="min-h-screen bg-white px-4 py-7 sm:py-10">
       <section className="mx-auto max-w-2xl">
         <a href="/checkin" className="mb-5 inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-brand-ink/55 hover:bg-white/50"><ArrowLeft size={16} /> Check-in</a>
         <header className="mb-6 text-center">

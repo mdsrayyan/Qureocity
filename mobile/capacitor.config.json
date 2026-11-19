@@ -1,0 +1,19 @@
+{
+  "appId": "com.qureocity.app",
+  "appName": "QureoCity",
+  "webDir": "www",
+  "backgroundColor": "#FFFFFF",
+  "server": {
+    "url": "https://qureocity.vercel.app/employee",
+    "cleartext": false,
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "disable"
+    }
+  }
+}

@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-brand-cloud overflow-hidden relative flex items-center justify-center">
+    <div className="min-h-screen bg-white overflow-hidden relative flex items-center justify-center">
       {/* Decorative background shapes — echoes the logo's sun-ray/circle motif */}
       <div className="pointer-events-none absolute -top-20 -left-20 w-72 h-72 rounded-full bg-brand-sun/20 blur-2xl" />
       <div className="pointer-events-none absolute top-40 -right-24 w-96 h-96 rounded-full bg-brand-sky/15 blur-2xl" />

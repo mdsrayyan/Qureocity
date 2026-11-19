@@ -25,7 +25,7 @@ export default function KioskLogin() {
   }
 
   return (
-    <main className="min-h-screen bg-brand-cloud flex items-center justify-center px-4">
+    <main className="min-h-screen bg-white flex items-center justify-center px-4">
       <form
         onSubmit={submit}
         className="bg-white rounded-xl2 shadow-lg p-8 w-full max-w-sm"
