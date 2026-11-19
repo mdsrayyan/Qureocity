@@ -268,6 +268,19 @@ html {
     0 4px 14px rgb(21 19 15 / 0.06);
 }
 
+/* ---- Android app: the page runs underneath the navigation bar ---------
+   The app sets --qc-inset-bottom to the navigation bar's height (0 in a
+   browser). Floating menus/buttons add it in their inline styles; here the
+   page and pop-up overlays keep their content clear of it. A transparent
+   border is used on overlays so their dim backdrop still reaches the edge.
+   KEEP IN SYNC with mobile/android/app/src/main/res/raw/page_inject.js. */
+.dark-ui {
+  padding-bottom: var(--qc-inset-bottom, 0px);
+}
+.fixed.inset-0 {
+  border-bottom: var(--qc-inset-bottom, 0px) solid transparent;
+}
+
 /* ---- Older-browser fallbacks -------------------------------------------
    Each block only applies where the browser lacks the feature, so modern
    browsers are completely unaffected. */

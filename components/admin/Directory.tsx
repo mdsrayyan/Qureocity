@@ -101,7 +101,7 @@ export default function Directory({
         : view === "all" ? "All customers" : "Customer results";
     return (
       <section>
-        <motion.button type="button" whileTap={tapScale} onClick={() => setAddCustomerOpen(true)} className="fixed right-5 z-50 inline-flex min-h-12 items-center gap-2 rounded-full border border-brand-sky/45 bg-brand-sky px-4 text-sm font-bold text-brand-ink shadow-lg shadow-black/20 transition-colors hover:brightness-105 md:hidden" style={{ bottom: "calc(env(safe-area-inset-bottom) + 94px)" }}>
+        <motion.button type="button" whileTap={tapScale} onClick={() => setAddCustomerOpen(true)} className="fixed right-5 z-50 inline-flex min-h-12 items-center gap-2 rounded-full border border-brand-sky/45 bg-brand-sky px-4 text-sm font-bold text-brand-ink shadow-lg shadow-black/20 transition-colors hover:brightness-105 md:hidden" style={{ bottom: "calc(max(env(safe-area-inset-bottom), var(--qc-inset-bottom, 0px)) + 94px)" }}>
           <Plus size={17} /> Add customer
         </motion.button>
         {addCustomerOpen && <AddCustomerModal onClose={() => setAddCustomerOpen(false)} onCreated={(phone) => {
@@ -161,7 +161,7 @@ export default function Directory({
         <Plus size={16} /> Add customer
       </motion.button>
 
-      <motion.button type="button" whileTap={tapScale} onClick={() => setAddCustomerOpen(true)} className="fixed right-5 z-50 inline-flex min-h-12 items-center gap-2 rounded-full border border-brand-sky/45 bg-brand-sky px-4 text-sm font-bold text-brand-ink shadow-lg shadow-black/20 transition-colors hover:brightness-105 md:hidden" style={{ bottom: "calc(env(safe-area-inset-bottom) + 94px)" }}>
+      <motion.button type="button" whileTap={tapScale} onClick={() => setAddCustomerOpen(true)} className="fixed right-5 z-50 inline-flex min-h-12 items-center gap-2 rounded-full border border-brand-sky/45 bg-brand-sky px-4 text-sm font-bold text-brand-ink shadow-lg shadow-black/20 transition-colors hover:brightness-105 md:hidden" style={{ bottom: "calc(max(env(safe-area-inset-bottom), var(--qc-inset-bottom, 0px)) + 94px)" }}>
         <Plus size={17} /> Add customer
       </motion.button>
 

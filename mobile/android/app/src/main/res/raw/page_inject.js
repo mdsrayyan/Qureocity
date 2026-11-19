@@ -11,6 +11,22 @@
 
   // Same rules as the all-white block in app/globals.css (keep in sync).
   var css = "[data-theme=\"light\"]{--night-bg:255 255 255 !important}.bg-brand-cloud[class*=\"min-h-\"]{background-color:#fff !important}html,body{background-color:#fff}[data-theme=\"light\"]{--night-surface:255 255 255 !important;--night-surface-2:255 255 255 !important} :root{--palette-cloud:255 255 255 !important} [data-theme=\"light\"] .dark-ui [class~=\"bg-brand-nightSurface\"] { box-shadow: 0 1px 2px rgb(21 19 15 / 0.05), 0 4px 14px rgb(21 19 15 / 0.06); } [data-theme=\"light\"] .dark-ui [class~=\"bg-brand-nightSurface\"]:not([class*=\"border\"]) { box-shadow: 0 0 0 1px rgb(21 19 15 / 0.08), 0 1px 2px rgb(21 19 15 / 0.05), 0 4px 14px rgb(21 19 15 / 0.06); } [data-theme=\"light\"] .dark-ui [class*=\"bg-brand-nightSurface2\"]:not([class*=\"border\"]) { box-shadow: 0 0 0 1px rgb(21 19 15 / 0.08); } .bg-brand-cloud:not([class*=\"min-h-\"]):not([class*=\"border\"]), [class*=\"bg-brand-cloud/\"]:not([class*=\"border\"]) { box-shadow: 0 0 0 1px rgb(21 19 15 / 0.08); } .bg-white.shadow-sm { box-shadow: 0 0 0 1px rgb(21 19 15 / 0.06), 0 1px 2px rgb(21 19 15 / 0.05), 0 4px 14px rgb(21 19 15 / 0.06); }";
+  // Page runs underneath the navigation bar: same rules as the "Android
+  // app" block in app/globals.css, plus overrides for the live site's
+  // older inline styles that only knew about env(safe-area-inset-bottom).
+  css +=
+    '.dark-ui{padding-bottom:var(--qc-inset-bottom,0px)}' +
+    '.fixed.inset-0{border-bottom:var(--qc-inset-bottom,0px) solid transparent}' +
+    '[style*="safe-area-inset-bottom) + 12px"]{bottom:calc(var(--qc-inset-bottom,0px) + 12px) !important}' +
+    '[style*="safe-area-inset-bottom) + 88px"]{bottom:calc(var(--qc-inset-bottom,0px) + 88px) !important}' +
+    '[style*="safe-area-inset-bottom) + 94px"]{bottom:calc(var(--qc-inset-bottom,0px) + 94px) !important}' +
+    '#qc-ptr{position:fixed;top:0;left:50%;z-index:2147483647;width:40px;height:40px;margin-left:-20px;' +
+    'border-radius:50%;background:#fff;box-shadow:0 2px 10px rgba(21,19,15,.18);display:flex;' +
+    'align-items:center;justify-content:center;pointer-events:none;opacity:0;transform:translateY(-48px)}' +
+    '#qc-ptr svg{width:22px;height:22px}' +
+    '#qc-ptr.qc-spin svg{animation:qc-ptr-spin .8s linear infinite}' +
+    '@keyframes qc-ptr-spin{to{transform:rotate(360deg)}}';
+
   var style = document.createElement("style");
   style.id = "qureocity-app-style";
   style.textContent = css;
@@ -84,6 +100,105 @@
     window.addEventListener("pageshow", schedule);
     document.addEventListener("visibilitychange", schedule);
   }
+
+  // ---- Pull to refresh ---------------------------------------------------
+  // Pull down from the very top of a page to reload it, like in Chrome.
+  // Ignored while a pop-up is open or when the finger is in a list that is
+  // itself scrolled down.
+  var THRESHOLD = 70, MAX = 110;
+  var ptr = null, startX = 0, startY = 0, pulling = false, pull = 0, refreshing = false;
+
+  function indicator() {
+    if (ptr) return ptr;
+    ptr = document.createElement("div");
+    ptr.id = "qc-ptr";
+    ptr.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="#7b5a8e" stroke-width="2.6" stroke-linecap="round">' +
+      '<path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4.5h-4.5"/></svg>';
+    document.body.appendChild(ptr);
+    return ptr;
+  }
+
+  function scrolledAncestor(el) {
+    while (el && el !== document.body && el !== document.documentElement) {
+      if (el.scrollTop > 0) {
+        var oy = getComputedStyle(el).overflowY;
+        if (oy === "auto" || oy === "scroll") return true;
+      }
+      el = el.parentElement;
+    }
+    return false;
+  }
+
+  function overlayOpen() {
+    var els = document.querySelectorAll(".fixed.inset-0");
+    for (var i = 0; i < els.length; i++) {
+      var r = els[i].getBoundingClientRect();
+      var cs = getComputedStyle(els[i]);
+      if (r.width > 0 && r.height > 0 && cs.display !== "none" && cs.visibility !== "hidden") return true;
+    }
+    return false;
+  }
+
+  function render() {
+    var el = indicator();
+    var p = Math.min(pull, MAX);
+    el.style.transition = "none";
+    el.style.opacity = String(Math.min(1, p / THRESHOLD));
+    el.style.transform = "translateY(" + (p - 40) + "px) rotate(" + (p * 3) + "deg)";
+  }
+
+  function reset() {
+    if (!ptr) return;
+    ptr.style.transition = "transform .2s ease, opacity .2s ease";
+    ptr.style.opacity = "0";
+    ptr.style.transform = "translateY(-48px)";
+  }
+
+  document.addEventListener("touchstart", function (e) {
+    pulling = false;
+    if (refreshing || e.touches.length !== 1) return;
+    var top = (document.scrollingElement || document.documentElement).scrollTop;
+    if (top > 0 || overlayOpen() || scrolledAncestor(e.target)) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    pulling = true;
+    pull = 0;
+  }, { passive: true });
+
+  document.addEventListener("touchmove", function (e) {
+    if (!pulling) return;
+    var dx = e.touches[0].clientX - startX, dy = e.touches[0].clientY - startY;
+    if (dy <= 0 || (pull === 0 && Math.abs(dx) > dy)) {
+      // Scrolling up, or a sideways swipe: not a pull.
+      pulling = false;
+      pull = 0;
+      reset();
+      return;
+    }
+    pull = dy * 0.5;
+    render();
+  }, { passive: true });
+
+  function end() {
+    if (!pulling) return;
+    pulling = false;
+    if (pull >= THRESHOLD) {
+      refreshing = true;
+      var el = indicator();
+      el.style.transition = "transform .2s ease";
+      el.style.opacity = "1";
+      el.style.transform = "translateY(" + (THRESHOLD - 30) + "px)";
+      el.className = "qc-spin";
+      location.reload();
+    } else {
+      reset();
+    }
+    pull = 0;
+  }
+  document.addEventListener("touchend", end, { passive: true });
+  document.addEventListener("touchcancel", end, { passive: true });
+
   if (document.body) start();
   else document.addEventListener("DOMContentLoaded", start);
 })();

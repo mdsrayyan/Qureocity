@@ -394,7 +394,7 @@ function EmployeePanelInner({
           language as the admin sidebar's nav items. */}
       <nav
         className="fixed left-3 right-3 z-40 mx-auto max-w-2xl rounded-2xl border border-white/15 bg-brand-nightSurface/95 p-1.5 shadow-2xl backdrop-blur-xl"
-        style={{ bottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
+        style={{ bottom: "calc(max(env(safe-area-inset-bottom), var(--qc-inset-bottom, 0px)) + 12px)" }}
         aria-label="Employee panel navigation"
       >
         <div
@@ -441,7 +441,7 @@ function EmployeePanelInner({
           title="Scan staff QR"
           className="fixed z-40 grid h-12 w-12 place-items-center rounded-full border border-brand-sky/40 bg-brand-sky text-brand-ink shadow-lg shadow-black/25 transition-colors hover:brightness-105"
           style={{
-            bottom: "calc(env(safe-area-inset-bottom) + 88px)",
+            bottom: "calc(max(env(safe-area-inset-bottom), var(--qc-inset-bottom, 0px)) + 88px)",
             right: "max(1.25rem, calc((100vw - 42rem) / 2 + 1.25rem))",
           }}
         >

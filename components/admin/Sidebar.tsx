@@ -181,7 +181,7 @@ export default function Sidebar({
       {/* Floating, thumb-reachable mobile navigation. */}
       <nav
         className="md:hidden fixed left-3 right-3 z-40 mx-auto max-w-lg rounded-2xl border border-white/15 bg-brand-nightSurface/95 p-1.5 shadow-2xl backdrop-blur-xl"
-        style={{ bottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
+        style={{ bottom: "calc(max(env(safe-area-inset-bottom), var(--qc-inset-bottom, 0px)) + 12px)" }}
         aria-label="Admin navigation"
       >
         <div className="grid grid-cols-5 gap-1">

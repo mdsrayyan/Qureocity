@@ -43,6 +43,7 @@ public class MainActivity extends BridgeActivity {
     private final SystemBarsBackground barsBackground = new SystemBarsBackground();
     private int statusBarColor = Color.WHITE;
     private int navigationBarColor = Color.WHITE;
+    private int bottomInsetCssPx = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,8 +65,16 @@ public class MainActivity extends BridgeActivity {
         ViewCompat.setOnApplyWindowInsetsListener(content, (v, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
             Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
-            v.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, ime.bottom));
+            boolean keyboardOpen = insets.isVisible(WindowInsetsCompat.Type.ime());
+            // The page runs underneath the navigation bar (no seam below the
+            // floating menu); it is told how tall that bar is via a CSS
+            // variable so it can keep its buttons clear of it. With the
+            // keyboard open the page simply ends above the keyboard.
+            v.setPadding(bars.left, bars.top, bars.right, keyboardOpen ? ime.bottom : 0);
             barsBackground.setTopHeight(bars.top);
+            float density = getResources().getDisplayMetrics().density;
+            bottomInsetCssPx = keyboardOpen ? 0 : Math.round(bars.bottom / density);
+            pushInsetToPage();
             return WindowInsetsCompat.CONSUMED;
         });
 
@@ -114,11 +123,25 @@ public class MainActivity extends BridgeActivity {
         controller.setAppearanceLightNavigationBars(isLight(navigationBarColor));
     }
 
-    private static void injectInto(WebView view, String script) {
+    private void injectInto(WebView view, String script) {
         String url = view.getUrl();
         if (url != null && url.startsWith("https://")) {
             view.evaluateJavascript(script, null);
+            pushInsetToPage();
         }
+    }
+
+    /** Sets --qc-inset-bottom (height of the navigation bar, CSS px) on the page. */
+    private void pushInsetToPage() {
+        if (bridge == null || bridge.getWebView() == null) {
+            return;
+        }
+        bridge
+            .getWebView()
+            .evaluateJavascript(
+                "document.documentElement.style.setProperty('--qc-inset-bottom','" + bottomInsetCssPx + "px')",
+                null
+            );
     }
 
     @Nullable
