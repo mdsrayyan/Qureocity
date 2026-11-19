@@ -236,6 +236,38 @@ html {
   border-color: rgb(61 54 53 / 0.16);
 }
 
+/* ---- All-white light theme ---------------------------------------------
+   Light theme surfaces are plain white; cards are separated from the page
+   with a soft shadow, and tiles/boxes without their own border get a thin
+   one. KEEP IN SYNC with mobile/android/app/src/main/res/raw/page_inject.js
+   (the Android app injects the same rules so it looks right before a
+   website redeploy). */
+[data-theme="light"] {
+  --night-surface: 255 255 255;
+  --night-surface-2: 255 255 255;
+}
+:root {
+  --palette-cloud: 255 255 255;
+}
+[data-theme="light"] .dark-ui [class~="bg-brand-nightSurface"] {
+  box-shadow: 0 1px 2px rgb(21 19 15 / 0.05), 0 4px 14px rgb(21 19 15 / 0.06);
+}
+[data-theme="light"] .dark-ui [class~="bg-brand-nightSurface"]:not([class*="border"]) {
+  box-shadow: 0 0 0 1px rgb(21 19 15 / 0.08), 0 1px 2px rgb(21 19 15 / 0.05),
+    0 4px 14px rgb(21 19 15 / 0.06);
+}
+[data-theme="light"] .dark-ui [class*="bg-brand-nightSurface2"]:not([class*="border"]) {
+  box-shadow: 0 0 0 1px rgb(21 19 15 / 0.08);
+}
+.bg-brand-cloud:not([class*="min-h-"]):not([class*="border"]),
+[class*="bg-brand-cloud/"]:not([class*="border"]) {
+  box-shadow: 0 0 0 1px rgb(21 19 15 / 0.08);
+}
+.bg-white.shadow-sm {
+  box-shadow: 0 0 0 1px rgb(21 19 15 / 0.06), 0 1px 2px rgb(21 19 15 / 0.05),
+    0 4px 14px rgb(21 19 15 / 0.06);
+}
+
 /* ---- Older-browser fallbacks -------------------------------------------
    Each block only applies where the browser lacks the feature, so modern
    browsers are completely unaffected. */

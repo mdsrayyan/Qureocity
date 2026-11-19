@@ -9,10 +9,8 @@
   if (window.__qureoAppInjected) return;
   window.__qureoAppInjected = true;
 
-  var css =
-    '[data-theme="light"]{--night-bg:255 255 255 !important}' +
-    '.bg-brand-cloud[class*="min-h-"]{background-color:#fff !important}' +
-    'html,body{background-color:#fff}';
+  // Same rules as the all-white block in app/globals.css (keep in sync).
+  var css = "[data-theme=\"light\"]{--night-bg:255 255 255 !important}.bg-brand-cloud[class*=\"min-h-\"]{background-color:#fff !important}html,body{background-color:#fff}[data-theme=\"light\"]{--night-surface:255 255 255 !important;--night-surface-2:255 255 255 !important} :root{--palette-cloud:255 255 255 !important} [data-theme=\"light\"] .dark-ui [class~=\"bg-brand-nightSurface\"] { box-shadow: 0 1px 2px rgb(21 19 15 / 0.05), 0 4px 14px rgb(21 19 15 / 0.06); } [data-theme=\"light\"] .dark-ui [class~=\"bg-brand-nightSurface\"]:not([class*=\"border\"]) { box-shadow: 0 0 0 1px rgb(21 19 15 / 0.08), 0 1px 2px rgb(21 19 15 / 0.05), 0 4px 14px rgb(21 19 15 / 0.06); } [data-theme=\"light\"] .dark-ui [class*=\"bg-brand-nightSurface2\"]:not([class*=\"border\"]) { box-shadow: 0 0 0 1px rgb(21 19 15 / 0.08); } .bg-brand-cloud:not([class*=\"min-h-\"]):not([class*=\"border\"]), [class*=\"bg-brand-cloud/\"]:not([class*=\"border\"]) { box-shadow: 0 0 0 1px rgb(21 19 15 / 0.08); } .bg-white.shadow-sm { box-shadow: 0 0 0 1px rgb(21 19 15 / 0.06), 0 1px 2px rgb(21 19 15 / 0.05), 0 4px 14px rgb(21 19 15 / 0.06); }";
   var style = document.createElement("style");
   style.id = "qureocity-app-style";
   style.textContent = css;
