@@ -77,6 +77,9 @@ export default function NotificationsCard() {
     if (s === "ready") {
       const sub = await getCurrentSubscription();
       ep = sub?.endpoint ?? null;
+      // Inside the Android app the permission is only known after the
+      // async check above.
+      setPermission(getPermission());
     }
     setEndpoint(ep);
 

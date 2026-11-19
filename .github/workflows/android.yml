@@ -13,6 +13,11 @@ name: Android APK
 # Without them a debug-signed APK is built instead (fine for testing, but a
 # newer debug APK may need the old app uninstalled first).
 #
+# Push notifications: add repository secret GOOGLE_SERVICES_JSON with the
+# full contents of google-services.json from your Firebase project (Android
+# app with package name com.qureocity.app). Without it the app builds fine
+# but can't receive notifications.
+#
 # Optional repository variable APP_URL overrides the site the app opens
 # (default in mobile/capacitor.config.json).
 
@@ -64,6 +69,17 @@ jobs:
         run: |
           jq --arg url "$APP_URL" '.server.url = $url' capacitor.config.json > tmp.json
           mv tmp.json capacitor.config.json
+
+      - name: Add Firebase config (push notifications)
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+            echo "Firebase config added."
+          else
+            echo "::warning::GOOGLE_SERVICES_JSON secret not set - this APK can't receive push notifications."
+          fi
 
       - name: Sync Android project
         run: npx cap sync android

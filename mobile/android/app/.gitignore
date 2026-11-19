@@ -1,2 +1,5 @@
 /build/*
 !/build/.npmkeep
+
+# Firebase config is injected by CI from the GOOGLE_SERVICES_JSON secret
+google-services.json

@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { NATIVE_ENDPOINT_PREFIX, NATIVE_KEY_PLACEHOLDER } from "./nativeEndpoint";
 
 const PUSH_USER_DISABLED_KEY = "qureocity-push-disabled";
 const PUSH_USER_ENABLED_KEY = "qureocity-push-enabled";
@@ -11,8 +12,64 @@ const PUSH_USER_ENABLED_KEY = "qureocity-push-enabled";
 
 export type PushSupport = "unsupported" | "needs-install" | "ready";
 
+// ---- Android app (mobile/) -------------------------------------------
+// Inside the app, Web Push isn't available; the app's QureoPush plugin
+// gives a Firebase token instead, saved as an ordinary subscription row.
+
+type NativeBridge = {
+  isNativePlatform?: () => boolean;
+  nativePromise?: (plugin: string, method: string, options?: Record<string, unknown>) => Promise<unknown>;
+};
+
+function nativeApp(): NativeBridge | null {
+  if (typeof window === "undefined") return null;
+  const cap = (window as unknown as { Capacitor?: NativeBridge }).Capacitor;
+  return cap?.isNativePlatform?.() && cap.nativePromise ? cap : null;
+}
+
+// Last known notification permission inside the app (native checks are
+// async, getPermission() is not).
+let nativePermission: NotificationPermission = "default";
+
+async function nativePush<T>(method: string, options: Record<string, unknown> = {}): Promise<T> {
+  const cap = nativeApp();
+  if (!cap?.nativePromise) throw new Error("Not running in the app");
+  return (await cap.nativePromise("QureoPush", method, options)) as T;
+}
+
+async function nativeGranted(request: boolean): Promise<boolean> {
+  const { granted } = await nativePush<{ granted: boolean }>(request ? "requestPermission" : "checkPermission");
+  nativePermission = granted ? "granted" : request ? "denied" : nativePermission;
+  return granted;
+}
+
+async function nativeEndpoint(): Promise<string> {
+  const { token } = await nativePush<{ token: string }>("getToken");
+  return NATIVE_ENDPOINT_PREFIX + token;
+}
+
+async function saveNativeDevice(endpoint: string) {
+  const supabase = createClient();
+  return supabase.rpc("push_save_subscription", {
+    p_endpoint: endpoint,
+    p_p256dh: NATIVE_KEY_PLACEHOLDER,
+    p_auth_secret: NATIVE_KEY_PLACEHOLDER,
+    p_user_agent: navigator.userAgent,
+    p_device_label: "Android · QureoCity app",
+  });
+}
+
+function nativeErrorMessage(err: unknown): string {
+  const message = err instanceof Error ? err.message : String(err ?? "");
+  if (/not implemented|not available/i.test(message)) {
+    return "This version of the app can't receive notifications yet. Please install the latest app build.";
+  }
+  return message || "Could not turn notifications on.";
+}
+
 export function getPushSupport(): PushSupport {
   if (typeof window === "undefined") return "unsupported";
+  if (nativeApp()) return "ready";
 
   const ua = navigator.userAgent;
   const isIOS =
@@ -37,6 +94,7 @@ export function getPushSupport(): PushSupport {
 }
 
 export function getPermission(): NotificationPermission {
+  if (nativeApp()) return nativePermission;
   return typeof Notification === "undefined"
     ? "default"
     : Notification.permission;
@@ -77,7 +135,15 @@ function deviceLabel(): string {
   return `${os} · ${browser}`;
 }
 
-export async function getCurrentSubscription(): Promise<PushSubscription | null> {
+export async function getCurrentSubscription(): Promise<{ endpoint: string } | null> {
+  if (nativeApp()) {
+    try {
+      if (!(await nativeGranted(false))) return null;
+      return { endpoint: await nativeEndpoint() };
+    } catch {
+      return null;
+    }
+  }
   if (getPushSupport() !== "ready") return null;
   const reg = await navigator.serviceWorker.getRegistration("/");
   return reg ? reg.pushManager.getSubscription() : null;
@@ -89,6 +155,28 @@ export async function enableThisDevice(): Promise<
   | { ok: true; endpoint: string }
   | { ok: false; reason: "denied" | "error"; message: string }
 > {
+  if (nativeApp()) {
+    try {
+      if (!(await nativeGranted(true))) {
+        return {
+          ok: false,
+          reason: "denied",
+          message: "Notifications are blocked for QureoCity. Allow them in Android Settings → Apps → QureoCity → Notifications.",
+        };
+      }
+      const endpoint = await nativeEndpoint();
+      const { error } = await saveNativeDevice(endpoint);
+      if (error) return { ok: false, reason: "error", message: error.message };
+      try {
+        localStorage.removeItem(PUSH_USER_DISABLED_KEY);
+        localStorage.setItem(PUSH_USER_ENABLED_KEY, "1");
+      } catch { /* storage can be unavailable */ }
+      return { ok: true, endpoint };
+    } catch (err) {
+      return { ok: false, reason: "error", message: nativeErrorMessage(err) };
+    }
+  }
+
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   if (!publicKey) {
     return {
@@ -164,12 +252,19 @@ export async function disableThisDevice(): Promise<void> {
     localStorage.setItem(PUSH_USER_DISABLED_KEY, "1");
     localStorage.removeItem(PUSH_USER_ENABLED_KEY);
   } catch { /* still remove server/browser subscription */ }
+  if (nativeApp()) {
+    const endpoint = await nativeEndpoint().catch(() => null);
+    if (!endpoint) return;
+    const { error } = await createClient().rpc("push_remove_subscription", { p_endpoint: endpoint });
+    if (error) throw error;
+    return;
+  }
   const sub = await getCurrentSubscription();
   if (!sub) return;
   const endpoint = sub.endpoint;
   const supabase = createClient();
   const { error } = await supabase.rpc("push_remove_subscription", { p_endpoint: endpoint });
-  await sub.unsubscribe();
+  await (sub as PushSubscription).unsubscribe();
   if (error) throw error;
 }
 
@@ -196,6 +291,16 @@ export async function sendTestNotification(endpoint: string): Promise<boolean> {
 // no prompt, since permission is already granted — and keeps the
 // server's copy (last_seen_at, keys) current either way.
 export async function refreshSubscriptionIfNeeded(): Promise<void> {
+  if (nativeApp()) {
+    try {
+      if (localStorage.getItem(PUSH_USER_DISABLED_KEY) === "1" || localStorage.getItem(PUSH_USER_ENABLED_KEY) !== "1") return;
+      if (!(await nativeGranted(false))) return;
+      await saveNativeDevice(await nativeEndpoint());
+    } catch (err) {
+      console.error("[push] app device refresh failed", err);
+    }
+    return;
+  }
   if (getPushSupport() !== "ready" || getPermission() !== "granted") return;
   try {
     if (localStorage.getItem(PUSH_USER_DISABLED_KEY) === "1" || localStorage.getItem(PUSH_USER_ENABLED_KEY) !== "1") return;

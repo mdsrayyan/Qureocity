@@ -1,5 +1,6 @@
 package com.qureocity.app;
 
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -8,6 +9,7 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -48,6 +50,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         registerPlugin(SystemBarColorsPlugin.class);
+        registerPlugin(PushPlugin.class);
         super.onCreate(savedInstanceState);
 
         Window window = getWindow();
@@ -105,6 +108,33 @@ public class MainActivity extends BridgeActivity {
         super.onConfigurationChanged(newConfig);
         // Same as above: undo the phone-theme based icon style.
         applyBarColors();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        openNotificationTarget(intent);
+    }
+
+    /** A tapped notification carries the page to open (e.g. /admin?tab=...). */
+    private void openNotificationTarget(Intent intent) {
+        if (intent == null || bridge == null || bridge.getWebView() == null) {
+            return;
+        }
+        String path = intent.getStringExtra(PushMessagingService.EXTRA_URL);
+        if (path == null || path.isEmpty()) {
+            return;
+        }
+        intent.removeExtra(PushMessagingService.EXTRA_URL);
+        Uri server = Uri.parse(bridge.getConfig().getServerUrl());
+        Uri target = Uri.parse(path);
+        // Only ever open pages of the app's own site.
+        String url = target.isAbsolute()
+            ? (server.getHost() != null && server.getHost().equals(target.getHost()) ? path : null)
+            : server.getScheme() + "://" + server.getAuthority() + (path.startsWith("/") ? path : "/" + path);
+        if (url != null) {
+            bridge.getWebView().loadUrl(url);
+        }
     }
 
     /** Called by the page (via the plugin) whenever its colours change. Main thread only. */

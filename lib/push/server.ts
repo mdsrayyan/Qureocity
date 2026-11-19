@@ -1,5 +1,6 @@
 import webpush from "web-push";
 import type { PushMessage } from "./events";
+import { isNativeEndpoint, nativePushIsConfigured, sendNativePush } from "./native";
 
 // Only ever POST to the real browser push services. A device could
 // register any URL as its "endpoint"; without this check the server
@@ -26,7 +27,7 @@ export function isAllowedPushEndpoint(endpoint: string): boolean {
 let configured = false;
 
 export function pushIsConfigured(): boolean {
-  return !!(
+  return nativePushIsConfigured() || !!(
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY &&
     process.env.VAPID_PRIVATE_KEY &&
     process.env.VAPID_SUBJECT
@@ -58,7 +59,12 @@ export async function sendPush(
   message: PushMessage,
   ttlSeconds = 3600,
 ): Promise<SendResult> {
+  // Android app devices go through Firebase, not Web Push.
+  if (isNativeEndpoint(target.endpoint)) {
+    return sendNativePush(target.endpoint, message, ttlSeconds);
+  }
   if (!isAllowedPushEndpoint(target.endpoint)) return "gone";
+  if (!process.env.VAPID_PRIVATE_KEY) return "failed";
   configure();
   try {
     // Safari's Web Push service (including iOS Home Screen web apps)
